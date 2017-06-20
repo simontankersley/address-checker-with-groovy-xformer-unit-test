@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+    <http:request-config name="HTTP_Request_Configuration" host="localhost" port="8082" doc:name="HTTP Request Configuration"/>
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <flow name="address-checkerFlow1">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/addresses/check" doc:name="HTTP" allowedMethods="POST"/>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <logger message="Received request #[payload]" level="INFO" doc:name="Logger"/>
+        <scripting:transformer doc:name="Groovy">
+            <scripting:script engine="Groovy" file="addresschecker/transformRequest.groovy"/>
+        </scripting:transformer>
+        <logger message="Transformed request to #[payload]" level="INFO" doc:name="Logger"/>
+        <flow-ref name="stub" doc:name="stub"/>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <logger message="Got response #[payload]" level="INFO" doc:name="Logger"/>
+        <scripting:transformer doc:name="Groovy">
+            <scripting:script engine="Groovy" file="addresschecker/transformResponse.groovy"/>
+        </scripting:transformer>
+        <logger message="Transformed response to #[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <sub-flow name="stub">
+        <set-payload value="#['&lt;checkerResult&gt;valid&lt;/checkerResult&gt;']" doc:name="Set Payload"/>
+    </sub-flow>
+</mule>
